@@ -1,10 +1,7 @@
 package com.example.rabbitmqspringpoc;
 
 
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
@@ -12,27 +9,53 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 @SpringBootApplication
 public class RabbitmqspringpocApplication {
 
-    static final String topicExchangeName = "spring-boot-exchange";
 
-    static final String queueName = "spring-boot";
 
     @Bean
-    Queue queue() {
-        return new Queue(queueName, false);
+    Queue replyQueue() {
+        return new Queue("reply_queue", false);
     }
 
     @Bean
-    TopicExchange exchange() {
-        return new TopicExchange(topicExchangeName);
+    Queue deadQueue() {
+        return new Queue("dead_queue", false);
     }
 
     @Bean
-    Binding binding(Queue queue, TopicExchange exchange) {
-        return BindingBuilder.bind(queue).to(exchange).with("foo.bar.#");
+    DirectExchange deadExchange() {
+        return new DirectExchange("dead_exchange");
+    }
+
+    @Bean
+    Binding deadBinding(Queue deadQueue, DirectExchange deadExchange) {
+        return BindingBuilder.bind(deadQueue).to(deadExchange).with("");
+    }
+
+
+    @Bean
+    Queue customerQueue() {
+
+        Map<String, Object> args = new HashMap<String, Object>();
+        args.put("x-dead-letter-exchange", "dead_exchange");
+        args.put("x-message-ttl", 60000);
+        return new Queue("customer", false, false, false, args);
+    }
+
+    @Bean
+    DirectExchange customerExchange() {
+        return new DirectExchange("customer_exchange");
+    }
+
+    @Bean
+    Binding customerBinding(Queue customerQueue, DirectExchange customerExchange) {
+        return BindingBuilder.bind(customerQueue).to(customerExchange).with("");
     }
 
  /*   @Bean
