@@ -39,18 +39,19 @@ public class Sender {
         props.setReplyTo("reply");*/
 
 
-
+         rabbitTemplate.setReplyTimeout(60000);
         //Message toSend = new Message(no.toString().getBytes(), props);
-        rabbitTemplate.convertAndSend("customer_exchange", "",no);
-        //System.out.println(" [.] Got '" + response + "'");
+        Object response=rabbitTemplate.convertSendAndReceive("customer_exchange", "",no);
+        if(response==null)  System.out.println(" [.] Got '" + response + "'");
+        System.out.println(" [.] Got '" + response + "'");
     }
 
 
-    @RabbitListener(queues = "reply_queue")
+    /*@RabbitListener(queues = "reply_queue")
     public void fibonacci(int n) throws IOException {
         System.out.println(" [.] Got '" +n+ " in reply");
 
-    }
+    }*/
 
 
 }
